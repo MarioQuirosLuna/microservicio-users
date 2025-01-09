@@ -29,7 +29,7 @@ public class UserService implements IUserService{
     @Transactional
     public User save(User user){
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setRoles(getRoles());
+        user.setRoles(getRoles(user));
 
         return repository.save(user);
     }
@@ -60,7 +60,7 @@ public class UserService implements IUserService{
             if(user.isEnabled() != null){
                 userDB.setEnabled(user.isEnabled());
             }
-            userDB.setRoles(getRoles());
+            userDB.setRoles(getRoles(user));
 
             return Optional.of(repository.save(userDB));
         }).orElseGet(() -> Optional.empty());
@@ -73,10 +73,15 @@ public class UserService implements IUserService{
         repository.deleteById(id);
     }
 
-    private List<Role> getRoles() {
+    private List<Role> getRoles(User user) {
         List<Role> roles = new ArrayList<>();
         Optional<Role> roleOptional = roleRepository.findByName("ROLE_USER");
         roleOptional.ifPresent(role -> roles.add(role));
+
+        if(user.isAdmin()){
+            Optional<Role> adminRoleOptional = roleRepository.findByName("ROLE_ADMIN");
+            adminRoleOptional.ifPresent(roles::add);
+        }
         return roles;
     }
 }

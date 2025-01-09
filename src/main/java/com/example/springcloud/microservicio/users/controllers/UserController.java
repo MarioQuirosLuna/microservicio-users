@@ -1,8 +1,5 @@
 package com.example.springcloud.microservicio.users.controllers;
 
-
-import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
 public class UserController {
-    
+
     @Autowired
     private IUserService service;
 
@@ -30,34 +27,33 @@ public class UserController {
 
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@RequestBody User user, @PathVariable Long id) {
-        Optional<User> userUpdatedOptional = service.update(user, id);
-        return userUpdatedOptional
+        return service.update(user, id)
                 .map(userUpdated -> ResponseEntity.status(HttpStatus.CREATED)
                         .body(userUpdated))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
-    
+
     @GetMapping("/{id}")
     public ResponseEntity<User> findById(@PathVariable Long id) {
-        Optional<User> user = service.findById(id);
-        return user.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        return service.findById(id)
+                .map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/username/{username}")
     public ResponseEntity<User> findUserByUsername(@PathVariable String username) {
-        User user = service.findByUsername(username);
-        return user != null ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
+        return service.findByUsername(username).map((user) -> ResponseEntity.ok(user))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
-    
-    @GetMapping("/{id}")
+
+    @GetMapping
     public ResponseEntity<Iterable<User>> findAllUsers() {
         return ResponseEntity.ok(service.findAll());
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id){
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
-    
+
 }

@@ -30,6 +30,7 @@ public class UserService implements IUserService{
     public User save(User user){
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRoles(getRoles(user));
+        user.setEnabled(true);
 
         return repository.save(user);
     }
@@ -40,8 +41,8 @@ public class UserService implements IUserService{
     }
 
     @Transactional(readOnly = true)
-    public User findByUsername(String username){
-        return repository.findByUsername(username);
+    public Optional<User> findByUsername(String username){
+        return Optional.of(repository.findByUsername(username));
     }
 
     @Transactional(readOnly = true)
@@ -50,6 +51,7 @@ public class UserService implements IUserService{
     }
 
     @Override
+    @Transactional
     public Optional<User> update(User user, Long id) {
         
         Optional<User> userOptional = this.findById(id);
@@ -57,7 +59,9 @@ public class UserService implements IUserService{
         return userOptional.map(userDB -> {
             userDB.setEmail(user.getEmail());
             userDB.setUsername(user.getUsername());
-            if(user.isEnabled() != null){
+            if(user.isEnabled() == null){
+                userDB.setEnabled(true);
+            }else{
                 userDB.setEnabled(user.isEnabled());
             }
             userDB.setRoles(getRoles(user));

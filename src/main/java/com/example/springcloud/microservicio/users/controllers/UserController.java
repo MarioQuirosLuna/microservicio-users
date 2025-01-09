@@ -6,7 +6,6 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.springcloud.microservicio.users.entities.User;
@@ -24,26 +23,18 @@ public class UserController {
     @Autowired
     private IUserService service;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
     @PostMapping
     public ResponseEntity<User> createUser(@RequestBody User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
         return new ResponseEntity<>(service.save(user), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@RequestBody User user, @PathVariable Long id) {
-        Optional<User> userOptional = service.findById(id);
-        return userOptional.map(userDB -> {
-            userDB.setEmail(user.getEmail());
-            userDB.setUsername(user.getUsername());
-            if(user.isEnabled() != null){
-                userDB.setEnabled(user.isEnabled());
-            }
-            return ResponseEntity.status(HttpStatus.CREATED).body(service.save(userDB));
-        }).orElseGet(() -> ResponseEntity.notFound().build());
+        Optional<User> userUpdatedOptional = service.update(user, id);
+        return userUpdatedOptional
+                .map(userUpdated -> ResponseEntity.status(HttpStatus.CREATED)
+                        .body(userUpdated))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
     
     @GetMapping("/{id}")

@@ -10,6 +10,6 @@ public interface IUserService {
     Optional<User> findById(Long id);
     User findByUsername(String username);
     Iterable<User> findAll();
+    Optional<User> update(User user, Long id);
     void delete(Long id);
-
 }

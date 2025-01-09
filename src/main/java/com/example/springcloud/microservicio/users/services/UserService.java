@@ -1,12 +1,17 @@
 package com.example.springcloud.microservicio.users.services;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.springcloud.microservicio.users.entities.Role;
 import com.example.springcloud.microservicio.users.entities.User;
+import com.example.springcloud.microservicio.users.repositories.RoleRepository;
 import com.example.springcloud.microservicio.users.repositories.UserRepository;
 
 @Service
@@ -15,8 +20,17 @@ public class UserService implements IUserService{
     @Autowired
     private UserRepository repository;
 
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @Transactional
     public User save(User user){
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setRoles(getRoles());
+
         return repository.save(user);
     }
 
@@ -35,8 +49,34 @@ public class UserService implements IUserService{
         return repository.findAll();
     }
 
+    @Override
+    public Optional<User> update(User user, Long id) {
+        
+        Optional<User> userOptional = this.findById(id);
+        
+        return userOptional.map(userDB -> {
+            userDB.setEmail(user.getEmail());
+            userDB.setUsername(user.getUsername());
+            if(user.isEnabled() != null){
+                userDB.setEnabled(user.isEnabled());
+            }
+            userDB.setRoles(getRoles());
+
+            return Optional.of(repository.save(userDB));
+        }).orElseGet(() -> Optional.empty());
+
+
+    }
+    
     @Transactional
     public void delete(Long id){
         repository.deleteById(id);
+    }
+
+    private List<Role> getRoles() {
+        List<Role> roles = new ArrayList<>();
+        Optional<Role> roleOptional = roleRepository.findByName("ROLE_USER");
+        roleOptional.ifPresent(role -> roles.add(role));
+        return roles;
     }
 }
